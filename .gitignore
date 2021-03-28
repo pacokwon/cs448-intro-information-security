@@ -177,5 +177,5 @@ Thumbs.db #thumbnail cache on Windows
 .prof
 # End of https://www.toptal.com/developers/gitignore/api/python,macos
 
-oracle-padding/handout/results/
-oracle-padding/handout/port
+oracle-padding/results/
+oracle-padding/port
