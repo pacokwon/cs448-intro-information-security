@@ -1,7 +1,17 @@
+from enum import Enum
 import random
 import socket
 import struct
-import dns
+import functools
+
+class QTYPE(Enum):
+    A       = 1
+    AAAA    = 28
+    CNAME   = 5
+    MX      = 15
+    NS      = 2
+    SOA     = 6
+    TXT     = 16
 
 def compute_checksum(msg):
     checksum = 0
@@ -65,6 +75,63 @@ def pack_udp_packet(**kwargs):
         kwargs["checksum"]
     )
 
+def pack_dns_header(**kwargs):
+    """
+    https://www2.cs.duke.edu/courses/fall16/compsci356/DNS/DNS-primer.pdf
+    id      : H (2 bytes)
+    qr      : 1 bit
+    opcode  : 4 bits
+    aa      : 1 bit
+    tc      : 1 bit
+    rd      : 1 bit
+    ra      : 1 bit
+    z       : 3 bits
+    rcode   : 4 bits
+    qdcount : H (2 bytes)
+    ancount : H (2 bytes)
+    nscount : H (2 bytes)
+    arcount : H (2 bytes)
+
+    qname   : str
+    qtype   : QTYPE
+    """
+
+    second_row = \
+        (kwargs["qr"] << 15) | \
+        (kwargs["opcode"] << 11) | \
+        (kwargs["aa"] << 10) | \
+        (kwargs["tc"] << 9) | \
+        (kwargs["rd"] << 8) | \
+        (kwargs["ra"] << 7) | \
+        (kwargs["z"] << 4) | \
+        (kwargs["rcode"])
+
+    return struct.pack("!HHHHHH",
+        kwargs["id"],
+        second_row,
+        kwargs["qdcount"],
+        kwargs["ancount"],
+        kwargs["nscount"],
+        kwargs["arcount"]
+    )
+
+
+def pack_dns_query(**kwargs):
+    """
+    qname   : str
+    qtype   : QTYPE
+    """
+
+    labels = kwargs["qname"].split('.')
+    sections = functools.reduce(
+        lambda acc, cur: f"{acc}{chr(len(cur))}{cur}",
+        labels,
+        ""
+    )
+    qclass = 0x0001 # internet class
+
+    return bytes(f"{sections}\x00", "utf-8") + struct.pack("!HH", kwargs["qtype"].value, qclass)
+
 
 def make_ip_packet(**kwargs):
     """
@@ -106,13 +173,44 @@ def make_udp_packet(**kwargs):
     payload = bytes(kwargs["payload"])
 
     fields = {
-        "src_port": socket.inet_pton(socket.AF_INET, kwargs["src_port"]),
-        "dest_port": socket.inet_pton(socket.AF_INET, kwargs["dest_port"]),
+        "src_port": kwargs["src_port"],
+        "dest_port": kwargs["dest_port"],
         "length": 8 + len(payload),
         "checksum": 0 # checksum is optional in UDP
     }
 
     return pack_udp_packet(**fields)
+
+
+def make_dns_packet(**kwargs):
+    """
+    required fields in kwargs:
+        qname
+        qtype
+    """
+
+    header_fields = {
+        "id": random.randint(0, 65535),
+        "qr": 0,        # is it a response?
+        "opcode": 0,    # 0 for a standard query
+        "aa": 0,        # only meaningful in response
+        "tc": 0,        # is the mssage truncated?
+        "rd": 1,        # use recursion?
+        "ra": 0,        # is recursion available?
+        "z": 0,         # for future use
+        "rcode": 0,     # response code
+        "qdcount": 1,   # # of questions
+        "ancount": 0,
+        "nscount": 0,
+        "arcount": 0,
+    }
+
+    query_fields = {
+        "qname": kwargs["qname"],
+        "qtype": kwargs["qtype"]
+    }
+
+    return pack_dns_header(**header_fields) + pack_dns_query(**query_fields)
 
 
 def make_dns_query(**kwargs):
@@ -125,15 +223,14 @@ def make_dns_query(**kwargs):
         qname
         qtype
     """
-    query = dns.message.make_query(kwargs["qname"], rdtype=dns.rdatatype.TXT)
-    wire = query.to_wire()
+    dns_packet = make_dns_packet(qname=kwargs["qname"], qtype=kwargs["qtype"])
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
 
     # include ip header
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
 
-    udp_packet = make_udp_packet(src_port=kwargs["src_port"], dest_port=kwargs["dest_port"], payload=wire)
+    udp_packet = make_udp_packet(src_port=kwargs["src_port"], dest_port=kwargs["dest_port"], payload=dns_packet)
     ip_packet = make_ip_packet(src_addr=kwargs["src_addr"], dest_addr=kwargs["dest_addr"], payload=udp_packet)
 
-    return sock.sendto(ip_packet + udp_packet + wire, (kwargs["dest_addr"], kwargs["dest_port"]))
+    return sock.sendto(ip_packet + udp_packet + dns_packet, (kwargs["dest_addr"], kwargs["dest_port"]))
