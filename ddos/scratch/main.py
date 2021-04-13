@@ -255,6 +255,6 @@ if __name__ == "__main__":
             dest_addr=ADDRS["amplifier"],
             src_port=5000,
             dest_port=53,
-            qname="apple.com",
-            qtype=QTYPE.MX
+            qname="live.com",
+            qtype=QTYPE.TXT
         )
