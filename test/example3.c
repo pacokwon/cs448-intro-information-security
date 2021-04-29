@@ -1,10 +1,3 @@
-int main()
-{
-    int x = 0;
-    int y = 30;
-    int z = divide(x, y);
-}
-
 int divide(int a, int b){
     int c = 0;
     if (a >=0){
@@ -14,4 +7,11 @@ int divide(int a, int b){
         c = 40/a;
     }
     return c;
+}
+
+int main()
+{
+    int x = 0;
+    int y = 30;
+    int z = divide(x, y);
 }
