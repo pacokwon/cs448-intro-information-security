@@ -28,7 +28,7 @@ setup.log
 
 # executable
 sanitizer
-example1
+example*
 
 # cov files
 *.cov
