@@ -1,0 +1,90 @@
+(rule
+ (deps simple_error.ll runtime.c)
+ (targets simple_error.output)
+ (action
+   (run ./test.sh simple_error.ll)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff simple_error.expected simple_error.output)))
+
+(rule
+ (deps simple_sub.ll runtime.c)
+ (targets simple_sub.output simple_sub.cov)
+ (action
+   (run ./test.sh simple_sub.ll)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff simple_sub.expected simple_sub.output)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff simple_sub.cov.expected simple_sub.cov)))
+
+(rule
+ (deps simple_mul.ll runtime.c)
+ (targets simple_mul.output simple_mul.cov)
+ (action
+   (run ./test.sh simple_mul.ll)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff simple_mul.expected simple_mul.output)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff simple_mul.cov.expected simple_mul.cov)))
+
+(rule
+ (deps simple_safe.ll runtime.c)
+ (targets simple_safe.output simple_safe.cov)
+ (action
+   (run ./test.sh simple_safe.ll)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff simple_safe.expected simple_safe.output)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff simple_safe.cov.expected simple_safe.cov)))
+
+(rule
+ (deps simple_loop.ll runtime.c)
+ (targets simple_loop.output simple_loop.cov)
+ (action
+   (run ./test.sh simple_loop.ll)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff simple_loop.expected simple_loop.output)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff simple_loop.cov.expected simple_loop.cov)))
+
+(rule
+ (deps simple_if_else.ll runtime.c)
+ (targets simple_if_else.output simple_if_else.cov)
+ (action
+   (run ./test.sh simple_if_else.ll)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff simple_if_else.expected simple_if_else.output)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff simple_if_else.cov.expected simple_if_else.cov)))

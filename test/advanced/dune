@@ -1,0 +1,63 @@
+(rule
+ (deps adv_1.ll runtime.c)
+ (targets adv_1.output adv_1.cov)
+ (action
+   (run ./test.sh adv_1.ll)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff adv_1.expected adv_1.output)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff adv_1.cov.expected adv_1.cov)))
+
+(rule
+ (deps double_loop.ll runtime.c)
+ (targets double_loop.output double_loop.cov)
+ (action
+   (run ./test.sh double_loop.ll)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff double_loop.expected double_loop.output)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff double_loop.cov.expected double_loop.cov)))
+
+(rule
+ (deps loop_if.ll runtime.c)
+ (targets loop_if.output loop_if.cov)
+ (action
+   (run ./test.sh loop_if.ll)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff loop_if.expected loop_if.output)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff loop_if.cov.expected loop_if.cov)))
+
+(rule
+ (deps if_for_if.ll runtime.c)
+ (targets if_for_if.output if_for_if.cov)
+ (action
+   (run ./test.sh if_for_if.ll)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff if_for_if.expected if_for_if.output)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff if_for_if.cov.expected if_for_if.cov)))
