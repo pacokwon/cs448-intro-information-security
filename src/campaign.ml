@@ -63,11 +63,6 @@ let mutate env input = let (min_trials, max_trials) = (10, 20) in
   return new seeds * coverage pair
 *)
 let update_seeds env success coverage new_coverage mutant seeds =
-  if success then
-    env.pass <- env.pass + 1
-  else
-    env.crash <- env.crash + 1;
-
   let uncovered = Coverage.diff new_coverage coverage in
   if Coverage.is_empty uncovered then
     (seeds, coverage)
