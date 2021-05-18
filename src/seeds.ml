@@ -6,7 +6,14 @@ let read_file filename =
   close_in ic;
   s
 
+(*
+  returns a set of file contents in `dir`
+
+  if `dir` contains 3 files: foo, bar and baz which contains "foo", "bar" and "baz" respectively,
+  then a set of ("foo", "bar", "baz") will be returned
+*)
 let read dir =
+  (* fold through all files in `dir` *)
   Sys.readdir dir
   |> Array.fold_left
        (fun seed_inputs file ->

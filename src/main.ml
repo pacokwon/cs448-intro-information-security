@@ -11,8 +11,12 @@ let sanity_check argv =
   if List.length argv <> 3 then (
     prerr_endline "usage: fuzzer [executable] [seed input dir] [output dir]";
     exit 1 );
+
+  (* executable *)
   List.nth argv 0 |> file_exists;
+  (* seed directory *)
   List.nth argv 1 |> file_exists;
+  (* output directory *)
   List.nth argv 2 |> mkdir
 
 let opts =
