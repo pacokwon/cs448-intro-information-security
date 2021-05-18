@@ -19,3 +19,8 @@ let read dir =
        (fun seed_inputs file ->
          Filename.concat dir file |> read_file |> Fun.flip add seed_inputs)
        empty
+
+let choose_one seeds =
+  let seeds_array = elements seeds |> Array.of_list in
+  let length = Array.length seeds_array in
+  Random.int length |> Array.get seeds_array
