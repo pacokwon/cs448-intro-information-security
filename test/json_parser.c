@@ -489,7 +489,7 @@ json_value * json_parse_ex (json_settings * settings,
          json_char b = (state.ptr == end ? 0 : *state.ptr);
 
          if (b == 'z')
-            printf("THIS IS A BUG! %d", b / ZERO);
+            printf("THIS IS A BUG! %d", b / ZERO); // ["z"]
 
          if (flags & flag_string)
          {
@@ -741,7 +741,7 @@ json_value * json_parse_ex (json_settings * settings,
 
                      if (top->parent && top->parent->type == json_array &&
                          top->parent->parent && top->parent->parent->type == json_array) {
-                        printf("THIS IS A BUG! %d", (flags / ZERO));
+                        printf("THIS IS A BUG! %d", (flags / ZERO)); // [[[3]]]
                      }
                   }
                   else
@@ -938,7 +938,7 @@ json_value * json_parse_ex (json_settings * settings,
                      flags = (flags & ~ flag_need_comma) | flag_next;
 
                      if (top->u.object.length == 0) {
-                        printf("THIS IS A BUG! %d", flags / ZERO);
+                        printf("THIS IS A BUG! %d", flags / ZERO); // {}
                      }
 
                      break;
