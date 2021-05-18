@@ -47,6 +47,7 @@ let main () =
       crash = 0;
     }
   in
+  Random.self_init ();
   Fuzzer.initialize env;
   Fuzzer.run env (Seeds.read env.seed_input_dir, Coverage.empty)
 
