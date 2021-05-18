@@ -18,13 +18,16 @@ let mutate_insert input =
 
 let mutate_delete input =
   let length = String.length input in
-  let split_index = length |> Random.int in
-  let first = String.sub input 0 split_index in
-  let second = String.sub input split_index (length - split_index) in
+  if length <= 1 then input else
+  let take = length |> Random.int in
+  let first = String.sub input 0 take in
+  let second = String.sub input (take + 1) (length - take - 1) in
   first ^ second
 
 let rec mutate_flip input =
   let length = String.length input in
+  if length <= 1 then input else
+
   let idx1 = length |> Random.int in
   let idx2 = length |> Random.int in
 
