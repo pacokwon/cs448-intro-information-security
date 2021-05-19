@@ -125,7 +125,7 @@ let rec mutate_helper (seeds: Seeds.t) input trials =
   if trials = 0 then input else
   let n = Random.int (Array.length mutations) in
   let mutant = input |> (Array.get mutations n) seeds (* mutation operator *) in
-  mutate seeds mutant (trials - 1)  (* recursion *)
+  mutate_helper seeds mutant (trials - 1)  (* recursion *)
 
 let mutate env seeds input = let (min_trials, max_trials) = (8, 16) in
   min_trials + Random.int (max_trials - min_trials)
