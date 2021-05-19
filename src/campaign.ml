@@ -22,6 +22,41 @@ let random_string len =
   foldi len append []
   |> String.concat ""
 
+let random_json_value () =
+  let rec helper depth =
+    if depth >= 4 then "null" else
+    let random_json_object () =
+      let rec craft size acc =
+        if size = 0 then acc else
+        let key = "\"" ^ random_string 10 ^ "\"" in
+        let value = depth |> succ |> helper in
+        (key ^ ": " ^ value) :: acc |> craft (size - 1)
+      in
+      let pairs = 1 + Random.int 5 |> Fun.flip craft [] in
+      "{" ^ (String.concat ", " pairs) ^ "}"
+    in
+    let random_json_array () =
+      let rec craft size acc =
+        if size = 0 then acc else
+        let value = depth |> succ |> helper in
+        value :: acc |> craft (size - 1)
+      in
+      let elems = 1 + Random.int 5 |> Fun.flip craft [] in
+      "[" ^ (String.concat ", " elems) ^ "]"
+    in
+    match Random.int 7 with
+    | 0 -> Random.bool () |> string_of_bool
+    | 1 -> Random.int 100 |> string_of_int
+    | 2 -> Random.float 10.0 |> string_of_float
+    | 3 -> random_string 10 |> fun str -> "\"" ^ str ^ "\""
+    | 4 -> "null"
+    | 5 -> random_json_array ()
+    | 6 -> random_json_object ()
+    | _ -> failwith "Never happens"
+  in
+
+  helper 0
+
 let string_rev input =
   let length = String.length input in
   String.init length (fun i -> input.[length - i - 1])
