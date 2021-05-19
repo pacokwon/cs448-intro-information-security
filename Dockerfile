@@ -10,22 +10,22 @@ ENV OCAML_VERSION=4.11.0
 ENV CS448_OPAM_SWITCH=cs448-$OCAML_VERSION
 ENV OPAMYES=1
 ENV HOME=/home/student
-
-RUN useradd -ms /bin/bash student
-
 ENV SCRIPT=$HOME/script
+
 RUN mkdir -p $SCRIPT
 COPY install-llvm-toolchain.sh $SCRIPT
-RUN $SCRIPT/install-llvm-toolchain.sh
 
-RUN opam init --compiler=$OCAML_VERSION --disable-sandboxing && \
+RUN $SCRIPT/install-llvm-toolchain.sh && \
+    opam init --compiler=$OCAML_VERSION --disable-sandboxing && \
     opam switch create $CS448_OPAM_SWITCH $OCAML_VERSION && \
     eval $(opam env) && \
     opam install dune llvm.10.0.0 ounit
 
-RUN echo "$(opam env)" >> ~/.bashrc
-RUN sudo adduser student sudo
-RUN echo "root:1234" | chpasswd
-RUN echo "student:1234" | chpasswd
+RUN echo "$(opam env)" >> ~/.bashrc && \
+    useradd -ms /bin/bash student && \
+    adduser student sudo && \
+    echo "root:1234" | chpasswd && \
+    echo "student:1234" | chpasswd
+
 USER student
 WORKDIR $HOME
