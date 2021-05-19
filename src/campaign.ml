@@ -8,9 +8,9 @@ type env = {
   mutable crash : int;
 }
 
-let mutate env seeds = let (min_trials, max_trials) = (8, 16) in
+let mutate env seeds input = let (min_trials, max_trials) = (8, 16) in
   min_trials + Random.int (max_trials - min_trials)
-  |> Mutation.mutate seeds
+  |> Mutation.mutate seeds input
 
 (*
   this function updates all necessary states of the fuzzer
@@ -38,7 +38,7 @@ let sanitize_newline input =
   strategy: run until `test` yields false
 *)
 let run env test (seeds, coverage) =
-  let mutant = Seeds.choose_one seeds |> sanitize_newline |> mutate env in
+  let mutant = Seeds.choose_one seeds |> sanitize_newline |> mutate env seeds in
   let success = test env mutant in
   let new_coverage = Coverage.read env.coverage_file in
   update_seeds env success coverage new_coverage mutant seeds
