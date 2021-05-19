@@ -1,13 +1,20 @@
+let random_char () =
+  (32 + Random.int (128 - 32) |> Char.chr |> String.make 1)
+
 (* returns a string of random characters *)
 let random_string len =
   let rec foldi num f acc =
     if num <= 0 then acc else foldi (pred num) f (f acc)
   in
   let append acc =
-    (32 + Random.int (128 - 32) |> Char.chr |> String.make 1) :: acc
+    random_char () :: acc
   in
   foldi len append []
   |> String.concat ""
+
+let string_rev input =
+  let length = String.length input in
+  String.init length (fun i -> input.[length - i - 1])
 
 let block_insert input =
   if input = "" then random_string 5 else
