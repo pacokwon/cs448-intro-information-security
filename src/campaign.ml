@@ -89,7 +89,6 @@ let mirror (seeds: Seeds.t) input =
   let half = String.sub input 0 idx in
   half ^ (string_rev half)
 
-
 let block_delete (seeds: Seeds.t) input =
   let length = String.length input in
 
@@ -151,8 +150,33 @@ let crossover (seeds: Seeds.t) seed1 =
 
   (String.sub seed1 0 (length1 / 2)) ^ String.sub seed2 (length2 / 2) (length2 / 2)
 
-let mutations = [| block_insert; block_delete; block_delete; swap |]
+let arrayify (seeds: Seeds.t) input =
+  let tokens = String.split_on_char ',' input in
+  let make_token token =
+    let destiny = Random.float 1. in
+    if destiny > 0.7 then "\"" ^ token ^ "\""
+    else if destiny > 0.4 then random_json_value ()
+    else token
+  in
+  let sep_tokens = List.map make_token tokens |> String.concat "," in
+  "[" ^ sep_tokens ^ "]"
+
+let objectify (seeds: Seeds.t) input =
+  let tokens = String.split_on_char ',' input in
+  let make_token token =
+    let key = "\"" ^ random_string 10 ^ "\"" in
+    let destiny = Random.float 1. in
+      key ^ ": " ^
+      if destiny > 0.7 then "\"" ^ token ^ "\""
+      else if destiny > 0.4 then random_json_value ()
+      else token
+  in
+  let sep_tokens = List.map make_token tokens |> String.concat ", " in
+  "{" ^ sep_tokens ^ "}"
+
+(* let mutations = [| block_insert; block_delete; block_delete; swap |] *)
 (* let mutations = [| insert; delete; swap; flip |] *)
+let mutations = [| insert; block_delete; block_delete; swap; arrayify; objectify |]
 
 (* apply mutation to an input `trials` times *)
 let rec mutate_helper (seeds: Seeds.t) input trials =
