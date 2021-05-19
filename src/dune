@@ -1,6 +1,6 @@
 (executable
  (name main)
- (modules main fuzzer campaign seeds coverage)
+ (modules main fuzzer campaign seeds coverage mutation)
  (libraries llvm llvm.bitreader llvm.irreader str unix))
 
 (executable
