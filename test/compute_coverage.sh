@@ -13,6 +13,7 @@ if ! [[ $timeout ]]; then
   timeout=10
 fi
 
+echo "timeout $timeout ../fuzzer -store_passing_input $binary $seed $output_dir"
 timeout $timeout ../fuzzer -store_passing_input $binary $seed $output_dir
 
 if [[ -e tmp.txt ]]; then
