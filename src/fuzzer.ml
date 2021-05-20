@@ -58,12 +58,10 @@ let test env input =
   match execute env.Campaign.exe input |> snd with
   | Unix.WEXITED 0 ->
       if !opt_store_passing_input then store_passing_input env input;
-      Printf.printf "%d passes found - %s\n" env.Campaign.pass input;
-      flush stdout;
       true
   | Unix.WEXITED _ | Unix.WSIGNALED _ ->
       store_crashing_input env input;
-      Printf.printf "%d crashes found - %s\n" env.Campaign.crash input;
+      Printf.printf "%d crashes found\n" env.Campaign.crash;
       flush stdout;
       false
   | _ -> failwith "Unknown Error"
