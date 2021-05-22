@@ -1,0 +1,35 @@
+(rule
+ (deps example1.ll)
+ (action
+  (with-stdout-to
+   example1.sign.output
+   (run ../analyzer example1.ll))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff example1.sign.expected example1.sign.output)))
+
+(rule
+ (deps example2.ll)
+ (action
+  (with-stdout-to
+   example2.sign.output
+   (run ../analyzer example2.ll))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff example2.sign.expected example2.sign.output)))
+
+(rule
+ (deps example3.ll)
+ (action
+  (with-stdout-to
+   example3.sign.output
+   (run ../analyzer example3.ll))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff example3.sign.expected example3.sign.output)))
