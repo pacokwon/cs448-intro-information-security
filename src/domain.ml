@@ -8,6 +8,9 @@ module type SET = sig
   val pp : Format.formatter -> t -> unit
 end
 
+(*
+  A lattice should define these functions
+ *)
 module type LATTICE = sig
   include SET
 
@@ -22,6 +25,9 @@ module type LATTICE = sig
   val meet : t -> t -> t
 end
 
+(*
+  Value Domain. Basically a set with additional operators
+ *)
 module type VALUE_DOMAIN = sig
   include LATTICE
 
@@ -44,6 +50,9 @@ module type VALUE_DOMAIN = sig
   val filter : Llvm.Icmp.t -> t -> t -> t
 end
 
+(*
+  Variable: SET of llvalues
+ *)
 module Variable : SET with type t = Llvm.llvalue = struct
   type t = Llvm.llvalue
 
@@ -52,9 +61,16 @@ module Variable : SET with type t = Llvm.llvalue = struct
   let pp fmt v = Utils.string_of_lhs v |> Format.fprintf fmt "%s"
 end
 
+(*
+  Memory Domain. Basically a set with additional operators
+ *)
 module type MEMORY_DOMAIN = sig
   include LATTICE
 
+  (*
+    Memory is a mapping of Identifier -> Value.
+    We define the Value here.
+   *)
   module Value : VALUE_DOMAIN
 
   val add : Variable.t -> Value.t -> t -> t
@@ -217,6 +233,7 @@ module Memory (Value : VALUE_DOMAIN) :
   module M = Map.Make (Variable)
   module Value = Value
 
+  (* M.t -> Value.t mapping *)
   type t = Value.t M.t
 
   let bottom = M.empty
@@ -240,6 +257,10 @@ module Memory (Value : VALUE_DOMAIN) :
 end
 
 module Table (M : MEMORY_DOMAIN) = struct
+  (*
+    Graph.Node can be used because it satisfies as Map.OrderedType,
+    which needs `t` and `compare`
+   *)
   include Map.Make (Graph.Node)
 
   let last_phi instr =

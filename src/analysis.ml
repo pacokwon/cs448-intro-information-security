@@ -1,6 +1,10 @@
 module D = Domain
 module F = Format
 
+(*
+  Module name: Make
+  Argument: Memory constrained by D.MEMORY_DOMAIN
+ *)
 module Make (Memory : D.MEMORY_DOMAIN) = struct
   module Semantics = Semantics.Make (Memory)
   module Table = Domain.Table (Semantics.Memory)
