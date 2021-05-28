@@ -10,7 +10,26 @@ module Make (Memory : D.MEMORY_DOMAIN) = struct
   module Table = Domain.Table (Semantics.Memory)
   module Memory = Semantics.Memory
 
-  let run llctx table = failwith "Not implemented"
+  let run llctx table =
+    let table_fold_func node value table =
+      let new_memory = Semantics.transfer_node llctx node value in (* new memory *)
+      Table.add node new_memory table (* update table with new memory *)
+    in
+
+    let rec loop llctx table cnt =
+      (*
+        iterate through the table.
+        if the table does not change in the middle of iteration, just return
+       *)
+      Format.printf "Iteration %d\n--------------- Table ---------------\n%a-------------------------------------\n" cnt Table.pp table;
+      Table.fold table_fold_func table table
+      |> fun new_table ->
+          Format.printf "------------- New Table -------------\n%a-------------------------------------\n" Table.pp new_table;
+          if new_table = table then new_table
+          else loop llctx new_table (cnt + 1)
+    in
+
+    loop llctx table 0
 
   let check_instr llctx instr memory =
     match Llvm.instr_opcode instr with

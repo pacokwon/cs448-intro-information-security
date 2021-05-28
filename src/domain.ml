@@ -58,7 +58,9 @@ module Variable : SET with type t = Llvm.llvalue = struct
 
   let compare = compare
 
-  let pp fmt v = Utils.string_of_lhs v |> Format.fprintf fmt "%s"
+  let pp fmt v =
+    (try Utils.string_of_lhs v with Not_found -> Llvm.string_of_llvalue v)
+    |> Format.fprintf fmt "Variable %s"
 end
 
 (*
@@ -146,6 +148,7 @@ end
 module type SIGN = sig
   type t = Bot | Pos | Neg | Zero | Top
 
+  (* := means "destructive substitution" *)
   include VALUE_DOMAIN with type t := t
 end
 
@@ -158,29 +161,131 @@ module Sign : SIGN = struct
 
   let top = Top
 
-  let of_src = failwith "Not implemented"
+  let of_src = Top
 
-  let of_sanitizer = failwith "Not implemented"
+  let of_sanitizer = Top
 
-  let order x y = failwith "Not implemented"
+  (*
+    reflexivity: a <= a for all a
+    antisymettry: a <= b and b <= a implies a = b
+    transitivity: a <= b and b <= c implies a <= c
+   *)
+  let order x y = match x, y with
+    | Top, _ | _, Bot
+    | Pos, Pos | Zero, Zero | Neg, Neg -> true
+    | _ -> false
 
-  let join x y = failwith "Not implemented"
+  let join x y = match x, y with
+    | Top, _ | _, Top -> Top
+    | Bot, other -> other
+    | other, Bot -> other
+    | _x, _y when _x = _y -> _x
+    | _ -> Top
 
-  let meet x y = failwith "Not implemented"
+  let meet x y = match x, y with
+    | Bot, _ | _, Bot -> Bot
+    | Top, other -> other
+    | other, Top -> other
+    | _x, _y when _x = _y -> _x
+    | _ -> Bot
 
-  let of_int i = failwith "Not implemented"
+  let of_int i = match i with
+    | num when num > 0 -> Pos
+    | num when num < 0 -> Neg
+    | _ -> Zero
 
-  let add v1 v2 = failwith "Not implemented"
+  let add v1 v2 = match v1, v2 with
+    | Pos, Pos | Pos, Zero | Zero, Pos        -> Pos
+    | Neg, Neg | Neg, Zero | Zero, Neg        -> Neg
+    | Zero, Zero                              -> Zero
+    | Bot, _ | _, Bot                         -> Bot
+    | Top, _ | _, Top | Pos, Neg | Neg, Pos   -> Top
 
-  let sub v1 v2 = failwith "Not implemented"
+  let sub v1 v2 = match v1, v2 with
+    | Pos, Neg | Pos, Zero | Zero, Neg        -> Pos
+    | Neg, Pos | Neg, Zero | Zero, Pos        -> Neg
+    | Zero, Zero                              -> Zero
+    | Bot, _ | _, Bot                         -> Bot
+    | Top, _ | _, Top | Pos, Pos | Neg, Neg   -> Top
 
-  let mul v1 v2 = failwith "Not implemented"
+  let mul v1 v2 = match v1, v2 with
+    | Pos, Pos | Neg, Neg -> Pos
+    | Pos, Neg | Neg, Pos -> Neg
+    | Zero, _ | _, Zero   -> Zero
+    | Bot, _ | _, Bot     -> Bot
+    | Top, _ | _, Top     -> Top
 
-  let div v1 v2 = failwith "Not implemented"
+  let div v1 v2 = match v1, v2 with
+    | Bot, _ | _, Bot | _, Zero -> Bot
+    | Zero, Neg | Zero, Pos -> Zero
+    | _ -> Top
 
-  let cmp pred v1 v2 = failwith "Not implemented"
+  (*
+    Pos means true, Zero means false
+   *)
+  let rec cmp (pred: Llvm.Icmp.t) v1 v2 = match pred with
+    | Llvm.Icmp.Eq -> (
+      match v1, v2 with
+        | Bot, _ | _, Bot -> Bot
+        | Zero, Zero -> Pos
+        | Zero, Neg | Neg, Zero | Zero, Pos
+        | Pos, Zero | Pos, Neg | Neg, Pos -> Zero
+        | _, _ -> Top
+    )
+    | Llvm.Icmp.Sgt -> (
+      match v1, v2 with
+        | Bot, _ | _, Bot -> Bot
+        | Neg, Zero | Neg, Pos | Zero, Zero | Zero, Pos -> Zero
+        | Zero, Neg | Pos, Neg | Pos, Zero -> Pos
+        | _ -> Top
+    )
+    | Llvm.Icmp.Sge -> (
+      match v1, v2 with
+        | Bot, _ | _, Bot -> Bot
+        | Neg, Zero | Neg, Pos | Zero, Pos -> Zero
+        | Zero, Neg | Pos, Neg | Zero, Zero | Pos, Zero -> Pos
+        | _ -> Top
+    )
+    | Llvm.Icmp.Ne | Llvm.Icmp.Slt | Llvm.Icmp.Sle -> (
+      match cmp (Utils.neg_pred pred) v1 v2 with
+        | Pos -> Zero
+        | Zero -> Pos
+        | Neg -> failwith "Invalid Result!"
+        | _ as result -> result
+    )
+    | _ -> failwith "Unsigned comparisons are not implemented!"
 
-  let filter pred v1 v2 = failwith "Not implemented"
+  (*
+    return a sound refinement of abstract numerical value `v1`
+    with respect to predicate pred and abstract numerical value `v2`
+   *)
+  let filter pred v1 v2 = match pred with
+    | Llvm.Icmp.Eq -> meet v1 v2
+    | Llvm.Icmp.Ne -> v1
+    | Llvm.Icmp.Sgt -> (
+      match v2 with
+        | Pos | Zero -> Pos
+        | _ -> v1
+    )
+    | Llvm.Icmp.Sge -> (
+      match v2 with
+        | Pos -> Pos
+        | _ -> v1
+    )
+    | Llvm.Icmp.Slt -> (
+      match v2 with
+        | Neg | Zero -> Neg
+        | _ -> v1
+    )
+    | Llvm.Icmp.Sle -> (
+      match v2 with
+        | Neg -> Neg
+        | _ -> v1
+    )
+    | Llvm.Icmp.Ugt
+    | Llvm.Icmp.Uge
+    | Llvm.Icmp.Ule
+    | Llvm.Icmp.Ult -> failwith "Unsigned filters are not implemented!"
 
   let pp fmt = function
     | Bot -> Format.fprintf fmt "Bot"
@@ -199,29 +304,48 @@ module Taint : VALUE_DOMAIN = struct
 
   let top = Taint
 
-  let of_int _ = failwith "Not implemented"
+  let of_int _ = None
 
-  let of_src = failwith "Not implemented"
+  let of_src = Taint
 
-  let of_sanitizer = failwith "Not implemented"
+  let of_sanitizer = None
 
-  let order x y = failwith "Not implemented"
+  let order x y =
+    match x, y with
+      | None, Taint | None, None | Taint, Taint -> true
+      | Taint, None -> false
 
-  let join x y = failwith "Not implemented"
+  let join x y =
+    match x, y with
+      | None, None -> None
+      | _ -> Taint
 
-  let meet x y = failwith "Not implemented"
+  let meet x y =
+    match x, y with
+      | Taint, Taint -> Taint
+      | _ -> None
 
-  let add x y = failwith "Not implemented"
+  let add x y =
+    match x, y with
+      | None, None -> None
+      | _ -> Taint
 
-  let sub = failwith "Not implemented"
+  let sub = add
 
-  let mul = failwith "Not implemented"
+  let mul = add
 
-  let div = failwith "Not implemented"
+  let div = add
 
-  let cmp _ = failwith "Not implemented"
+  let cmp _ = add
 
-  let filter pred v1 v2 = failwith "Not implemented"
+  (*
+    return a sound refinement of abstract numerical value `v1`
+    with respect to predicate pred and abstract numerical value `v2`
+   *)
+  let filter pred v1 v2 =
+    match pred with
+      | Llvm.Icmp.Eq -> meet v1 v2
+      | _ -> v1
 
   let pp fmt = function
     | None -> Format.fprintf fmt "Bot"
@@ -246,9 +370,18 @@ module Memory (Value : VALUE_DOMAIN) :
 
   let find x m = try M.find x m with Not_found -> Value.bottom
 
-  let order m1 m2 = failwith "Not implemented"
+  (* For all variables in m1, compare the corresponding values *)
+  let order m1 m2 = M.fold (
+    fun lv val1 acc ->
+      (* early return if acc is false *)
+      if not acc then acc else
+      (* get value2 from m2 *)
+      let val2 = find lv m2 in
+      Value.order val1 val2
+  ) m1 true
 
-  let join m1 m2 = failwith "Not implemented"
+  (* Join valuess that have the same key *)
+  let join m1 m2 = M.union (fun _ val1 val2 -> Some (Value.join val1 val2)) m1 m2
 
   let meet _ _ = failwith "NOTE: We do not use meet"
 
@@ -269,6 +402,7 @@ module Table (M : MEMORY_DOMAIN) = struct
         match Llvm.instr_opcode next with Llvm.Opcode.PHI -> false | _ -> true)
     | _ -> true
 
+  (* construct bottom table for nodes *)
   let init llm =
     Utils.fold_left_all_instr
       (fun table instr ->

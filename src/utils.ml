@@ -151,8 +151,8 @@ let neg_pred = function
   | Llvm.Icmp.Uge -> Llvm.Icmp.Ult
 
 let flip_pred = function
-  | Llvm.Icmp.Eq -> Llvm.Icmp.Ne
-  | Llvm.Icmp.Ne -> Llvm.Icmp.Eq
+  | Llvm.Icmp.Eq -> Llvm.Icmp.Eq
+  | Llvm.Icmp.Ne -> Llvm.Icmp.Ne
   | Llvm.Icmp.Slt -> Llvm.Icmp.Sgt
   | Llvm.Icmp.Ult -> Llvm.Icmp.Ugt
   | Llvm.Icmp.Sle -> Llvm.Icmp.Sge
@@ -179,3 +179,8 @@ let get_next_phi instr =
       match Llvm.instr_opcode next_instr with
       | Llvm.Opcode.PHI -> next
       | _ -> raise Not_found)
+
+let is_debug instr =
+  let callee_expr = Llvm.operand instr (Llvm.num_operands instr - 1) in
+  let r1 = Str.regexp "llvm\\.dbg\\..+" in
+  Str.string_match r1 (Llvm.value_name callee_expr) 0
