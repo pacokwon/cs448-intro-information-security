@@ -171,7 +171,7 @@ module Sign : SIGN = struct
     transitivity: a <= b and b <= c implies a <= c
    *)
   let order x y = match x, y with
-    | Top, _ | _, Bot
+    | _, Top | Bot, _
     | Pos, Pos | Zero, Zero | Neg, Neg -> true
     | _ -> false
 
