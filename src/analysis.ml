@@ -11,9 +11,20 @@ module Make (Memory : D.MEMORY_DOMAIN) = struct
   module Memory = Semantics.Memory
 
   let run llctx table =
-    let table_fold_func node value table =
-      let new_memory = Semantics.transfer_node llctx node value in (* new memory *)
-      Table.add node new_memory table (* update table with new memory *)
+    let table_fold_func node memory (table, og_table) =
+      let prev_fold_func acc_memory node =
+        Table.find node og_table
+        |> Memory.join acc_memory
+      in
+      let joined =
+        Domain.Graph.pred node
+        |> List.fold_left prev_fold_func memory
+      in
+      let new_memory =
+        joined
+        |> Semantics.transfer_node llctx node
+      in (* new memory *)
+      (Table.add node new_memory table, og_table) (* update table with new memory *)
     in
 
     let rec loop llctx table cnt =
@@ -21,11 +32,11 @@ module Make (Memory : D.MEMORY_DOMAIN) = struct
         iterate through the table.
         if the table does not change in the middle of iteration, just return
        *)
-      Format.printf "Iteration %d\n--------------- Table ---------------\n%a-------------------------------------\n" cnt Table.pp table;
-      Table.fold table_fold_func table table
-      |> fun new_table ->
-          Format.printf "------------- New Table -------------\n%a-------------------------------------\n" Table.pp new_table;
-          if new_table = table then new_table
+      (* Format.printf "Iteration %d\n--------------- Table ---------------\n%a-------------------------------------\n" cnt Table.pp table; *)
+      Table.fold table_fold_func table (table, table)
+      |> fun (new_table, _) ->
+          let eq = Table.equal (fun x y -> Memory.order x y && Memory.order y x) table new_table in
+          if eq then new_table
           else loop llctx new_table (cnt + 1)
     in
 

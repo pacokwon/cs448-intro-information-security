@@ -165,6 +165,13 @@ module Sign : SIGN = struct
 
   let of_sanitizer = Top
 
+  let pp fmt = function
+    | Bot -> Format.fprintf fmt "Bot"
+    | Pos -> Format.fprintf fmt "Pos"
+    | Neg -> Format.fprintf fmt "Neg"
+    | Zero -> Format.fprintf fmt "Zero"
+    | Top -> Format.fprintf fmt "Top"
+
   (*
     reflexivity: a <= a for all a
     antisymettry: a <= b and b <= a implies a = b
@@ -230,7 +237,7 @@ module Sign : SIGN = struct
         | Zero, Zero -> Pos
         | Zero, Neg | Neg, Zero | Zero, Pos
         | Pos, Zero | Pos, Neg | Neg, Pos -> Zero
-        | _, _ -> Top
+        | _ -> Top
     )
     | Llvm.Icmp.Sgt -> (
       match v1, v2 with
@@ -287,12 +294,6 @@ module Sign : SIGN = struct
     | Llvm.Icmp.Ule
     | Llvm.Icmp.Ult -> failwith "Unsigned filters are not implemented!"
 
-  let pp fmt = function
-    | Bot -> Format.fprintf fmt "Bot"
-    | Pos -> Format.fprintf fmt "Pos"
-    | Neg -> Format.fprintf fmt "Neg"
-    | Zero -> Format.fprintf fmt "Zero"
-    | Top -> Format.fprintf fmt "Top"
 end
 
 module Taint : VALUE_DOMAIN = struct
@@ -386,7 +387,9 @@ module Memory (Value : VALUE_DOMAIN) :
   let meet _ _ = failwith "NOTE: We do not use meet"
 
   let pp fmt m =
-    M.iter (fun k v -> F.fprintf fmt "%a -> %a\n" Variable.pp k Value.pp v) m
+    if m = M.empty then () else
+    F.printf "\n";
+    M.iter (fun k v -> F.fprintf fmt "\t%a -> %a\n" Variable.pp k Value.pp v) m
 end
 
 module Table (M : MEMORY_DOMAIN) = struct
@@ -423,6 +426,12 @@ module Table (M : MEMORY_DOMAIN) = struct
 
   let find label tbl = try find label tbl with Not_found -> M.bottom
 
+  let should_ignore_node = function
+    | Graph.Node.Atomic instr -> Llvm.instr_opcode instr = Llvm.Opcode.Ret || Utils.is_debug instr
+    | _ -> false
+
   let pp fmt tbl =
-    iter (fun k v -> F.fprintf fmt "%a -> %a\n" Graph.Node.pp k M.pp v) tbl
+    iter (fun k v ->
+      (* if should_ignore_node k then () else *)
+      F.fprintf fmt "Node: %a%a\n" Graph.Node.pp k M.pp v) tbl
 end

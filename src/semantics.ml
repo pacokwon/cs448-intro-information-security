@@ -112,17 +112,18 @@ module Make (Memory : D.MEMORY_DOMAIN) : S = struct
       | Some `Conditional (icmp_instr, _, _) -> filtered_memory icmp_instr truth memory
       | _ -> failwith "Only conditional br instructions are allowed here"
 
-  let transfer_atomic _ instr memory = match get_atomic_type instr with
-    | Assignment ->
-        (* F.printf "assignment\n"; *)
-        Memory.add instr (eval instr memory) memory
-    | Source ->
-        (* F.printf "Source is Here!\n"; *)
-        Memory.add instr Value.top memory
-    (* the instruction **itself** is the variable *)
-    | Print | Jump | Noop ->
-        (* F.printf "noop\n"; *)
-        memory
+  let transfer_atomic _ instr memory =
+    match get_atomic_type instr with
+      | Assignment ->
+          (* F.printf "assignment\n"; *)
+          Memory.add instr (eval instr memory) memory
+      | Source ->
+          (* F.printf "Source is Here!\n"; *)
+          Memory.add instr Value.top memory
+      (* the instruction **itself** is the variable *)
+      | Print | Jump | Noop ->
+          (* F.printf "noop\n"; *)
+          memory
 
   let transfer_cond _ instr b memory = filter instr b memory
 
@@ -144,7 +145,6 @@ module Make (Memory : D.MEMORY_DOMAIN) : S = struct
   let transfer_node llctx node memory =
     match node with
     | Domain.Graph.Node.Atomic instr -> transfer_atomic llctx instr memory
-    | Domain.Graph.Node.CondBranch (instr, b) ->
-        transfer_cond llctx instr b memory
+    | Domain.Graph.Node.CondBranch (instr, b) -> transfer_cond llctx instr b memory
     | Domain.Graph.Node.Phi instrs -> transfer_phi llctx instrs memory
 end
