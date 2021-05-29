@@ -8,3 +8,4 @@ services:
     container_name: 'ocaml'
     volumes:
       - '.:/home/student/workspace'
+    working_dir: '/home/student/workspace'
