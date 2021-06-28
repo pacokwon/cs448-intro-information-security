@@ -181,3 +181,44 @@ oracle-padding/results/
 oracle-padding/port
 
 *20190046*
+
+# ocaml
+*.annot
+*.cmo
+*.cma
+*.cmi
+*.a
+*.o
+*.cmx
+*.cmxs
+*.cmxa
+
+# ocamlbuild working directory
+_build/
+
+# ocamlbuild targets
+*.byte
+*.native
+
+# oasis generated files
+setup.data
+setup.log
+
+# Merlin configuring file for Vim and Emacs
+.merlin
+
+# executable
+sanitizer
+example*
+
+# cov files
+*.cov
+
+# llvm files
+*.bc
+*.ll
+
+# latex
+*.aux
+*.log
+*.gz
