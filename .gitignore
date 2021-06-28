@@ -218,6 +218,9 @@ llvm-sanitizer/*.cov
 llvm-fuzzer/fuzzer
 llvm-fuzzer/sanitizer
 
+# executable
+llvm-analyzer/analyzer
+
 # llvm files
 *.bc
 *.ll

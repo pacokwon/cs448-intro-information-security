@@ -1,0 +1,11 @@
+version: '3.9'
+
+services:
+  ocaml:
+    build:
+      context: .
+    image: 'pacokwon/cs448-5'
+    container_name: 'ocaml'
+    volumes:
+      - '.:/home/student/workspace'
+    working_dir: '/home/student/workspace'
