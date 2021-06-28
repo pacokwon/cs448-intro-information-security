@@ -1,8 +1,21 @@
+<<<<<<< HEAD
 int main()
 {
     int x = 10;
     int y = 100;
 
+=======
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+    char input[65536];
+    int x = 10;
+    int y = 100;
+
+    fgets(input, sizeof(input), stdin);
+>>>>>>> fuzzer/master
 
     if(x / y == 2)
     {
@@ -23,7 +36,11 @@ int main()
     }
     else
     {
+<<<<<<< HEAD
         int k = x - y;
+=======
+        int k = x - atoi(input);
+>>>>>>> fuzzer/master
 
         int err = (x + y) / k;
     }

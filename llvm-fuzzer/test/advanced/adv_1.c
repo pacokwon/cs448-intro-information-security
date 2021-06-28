@@ -1,8 +1,23 @@
+<<<<<<< HEAD
 int main()
 {
     int x = 0;
     int t = 10;
 
+=======
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+    char input[65536];
+    int x = 0;
+    int t = 10;
+
+    fgets(input, sizeof(input), stdin);
+    x = atoi(input);
+
+>>>>>>> fuzzer/master
     if(x >= 10)
     {
         int y = 100 / x;

@@ -208,11 +208,15 @@ setup.log
 .merlin
 
 # executable
-sanitizer
-example*
+llvm-sanitizer/sanitizer
+llvm-sanitizer/example*
 
 # cov files
-*.cov
+llvm-sanitizer/*.cov
+
+# executable
+llvm-fuzzer/fuzzer
+llvm-fuzzer/sanitizer
 
 # llvm files
 *.bc
@@ -222,3 +226,13 @@ example*
 *.aux
 *.log
 *.gz
+
+# generated dirs
+llvm-fuzzer/output_dir
+
+llvm-fuzzer/*.cov
+
+llvm-fuzzer/example1
+llvm-fuzzer/example2
+llvm-fuzzer/json_parser
+llvm-fuzzer/test/json_output/*

@@ -1,0 +1,9 @@
+(executable
+ (name main)
+ (modules main fuzzer campaign seeds coverage)
+ (libraries llvm llvm.bitreader llvm.irreader str unix))
+
+(executable
+ (name sanitizer)
+ (modules sanitizer instrument utils)
+ (libraries llvm llvm.bitreader llvm.irreader str unix))
